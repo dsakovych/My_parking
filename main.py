@@ -16,7 +16,6 @@ def main():
     cap.set(cv2.CAP_PROP_POS_FRAMES, Config.START_FRAME)  # jump to frame
 
     if Config.SAVE_VIDEO:
-        # ('P','I','M','1'), ('D','I','V','X'), ('M','J','P','G'), ('X','V','I','D')
         fourcc = cv2.VideoWriter_fourcc('C', 'R', 'A', 'M')
         out = cv2.VideoWriter(Config.RECORDING_OUTPUT_NAME, -1, 25.0, (video_info['width'], video_info['height']))
 
@@ -28,7 +27,6 @@ def main():
     # Create Background subtractor
     if Config.MOTION_DETECTION:
         fgbg = cv2.createBackgroundSubtractorMOG2(history=300, varThreshold=16, detectShadows=True)
-        # fgbg = cv2.createBackgroundSubtractorKNN(history=100, dist2Threshold=800.0, detectShadows=False)
 
     # Read YML data (parking space polygons)
     with open(Config.PL_LOCATIONS, 'r') as parking_lots:
@@ -52,7 +50,6 @@ def main():
         parking_mask.append(mask)
 
     kernel_erode = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))  # morphological kernel
-    # kernel_dilate = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(13,13)) # morphological kernel
     kernel_dilate = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 19))
     parking_status = [False] * len(parking_data)
     parking_buffer = [None] * len(parking_data)
@@ -83,6 +80,7 @@ def main():
             bw = cv2.erode(bw, kernel_erode, iterations=1)
             bw = cv2.dilate(bw, kernel_dilate, iterations=1)
             (_, cnts, _) = cv2.findContours(bw.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
             # loop over the contours
             for c in cnts:
                 # if the contour is too small, ignore it
@@ -110,12 +108,11 @@ def main():
                     if video_cur_pos - parking_buffer[ind] > Config.PARK_SEC_TO_WAIT:
                         parking_status[ind] = status
                         parking_buffer[ind] = None
+
                 # If status is still same and counter is open
                 elif status == parking_status[ind] and parking_buffer[ind] != None:
                     # if video_cur_pos - parking_buffer[ind] > config['park_sec_to_wait']:
                     parking_buffer[ind] = None
-                    # print("#%d: %.2f" % (ind, delta))
-            # print(parking_status)
 
         if Config.PARKING_OVERLAY:
             for ind, park in enumerate(parking_data):
